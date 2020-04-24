@@ -1,0 +1,75 @@
+
+jobs:
+  checkout_code:
+    docker:
+      - image: cimg/base:2019.10
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /home/circleci/project
+          paths:
+            - .
+
+  unit_test:
+    docker:
+      - image: cimg/base:2019.10
+    working_directory: /home/circleci/project
+
+    steps: # steps that comprise the `build` job
+      - attach_workspace:
+          at: /home/circleci/project
+
+      - run:
+          name: Run unit tests
+          command: |
+            echo 'No tests yet.'
+
+  build:
+    docker:
+      - image: cimg/base:2019.10
+    working_directory: /home/circleci/project
+    steps: # steps that comprise the `build` job
+      - attach_workspace:
+          at: /home/circleci/project
+
+      - run:
+          name: Build static side
+          command: |
+            echo 'No build yet'
+
+      - persist_to_workspace:
+          root: /home/circleci/project
+          paths:
+            - .
+
+  deploy:
+    docker: 
+      - image: cimg/base:2019.10
+    steps:
+      - run:
+          name: Upload to S3
+          command: |
+            ls .
+
+workflows:
+    version: 2
+    # The main workflow. Check out the code, build it, push it, deploy to staging, test, deploy to production
+    build_test_and_deploy:
+      jobs:
+        - checkout_code
+
+        - unit_test:
+            requires:
+              - checkout_code
+
+        - build:
+            requires:
+              - unit_test
+
+        - deploy:
+            requires:
+              - build
+            filters:
+              branches:
+                only:  # only branches matching the below regex filters will run
+                  - /^master$/
